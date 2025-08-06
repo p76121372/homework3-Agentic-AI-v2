@@ -11,7 +11,13 @@ class DataPreprocessor:
     """
     
     def __init__(self):
-        self.stats_file = 'model_weight/preprocessing_stats.pkl'
+        # 自動檢測目錄結構並設定正確的路徑
+        if os.path.exists('utils'):
+            # 從根目錄執行（存在 utils 目錄）
+            self.stats_file = 'utils/model_weight/preprocessing_stats.pkl'
+        else:
+            # 從 utils 目錄內執行（不存在 utils 目錄）
+            self.stats_file = 'model_weight/preprocessing_stats.pkl'
         self.stats = None
     
     def save_stats(self, stats: Dict[str, Any]) -> None:
@@ -22,6 +28,11 @@ class DataPreprocessor:
             stats (Dict[str, Any]): 統計信息字典
         """
         try:
+            # 確保目錄存在
+            stats_dir = os.path.dirname(self.stats_file)
+            if stats_dir:
+                os.makedirs(stats_dir, exist_ok=True)
+            
             with open(self.stats_file, 'wb') as f:
                 pickle.dump(stats, f)
             print(f"✅ 統計信息已保存到 {self.stats_file}")
@@ -216,4 +227,4 @@ def main():
         print(f"⚠️  測試文件 {test_file} 不存在")
 
 if __name__ == "__main__":
-    main()
+    main() 

@@ -40,7 +40,7 @@ class DataQualityAgent:
             csv_file_path (str): Path to the CSV file to analyze
         """
         self.csv_file_path = csv_file_path
-        self.model_path = 'model_weight/sensor_classifier.pth'
+        self.model_path = 'utils/model_weight/sensor_classifier.pth'
         self.data = None
         self.model = None
         self.label_encoder = None
@@ -93,7 +93,7 @@ class DataQualityAgent:
             bool: True if successful, False otherwise
         """
         try:
-            # Load model checkpoint
+            # Load model checkpoint (no longer contains DummyScaler)
             checkpoint = torch.load(self.model_path, map_location=self.device, weights_only=False)
             
             # Initialize model
@@ -598,4 +598,4 @@ def main():
     agent.save_summary_to_file(summary)
 
 if __name__ == "__main__":
-    main()
+    main() 

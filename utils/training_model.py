@@ -241,7 +241,6 @@ def main():
     torch.save({
         'model_state_dict': model.state_dict(),
         'label_encoder': label_encoder,
-        'scaler': scaler,
         'accuracy': accuracy
     }, 'model_weight/sensor_classifier.pth')
     
@@ -264,4 +263,4 @@ def main():
                   f"vibration={features[2]:.2f} | 真實: {true_label} | 預測: {pred_label}")
 
 if __name__ == "__main__":
-    main()
+    main() 
