@@ -26,23 +26,7 @@ class SensorClassifier(nn.Module):
         x = self.layer3(x)
         return x
 
-class DummyScaler:
-    """虛擬的Scaler類別，用於與DataPreprocessor的兼容性"""
-    def __init__(self):
-        self.mean_ = None
-        self.scale_ = None
-    
-    def fit_transform(self, X):
-        # 直接返回已經標準化的數據
-        return X
-    
-    def transform(self, X):
-        # 直接返回已經標準化的數據
-        return X
-    
-    def inverse_transform(self, X):
-        # 直接返回數據，因為DataPreprocessor已經處理了標準化
-        return X
+
 
 def load_and_preprocess_data(csv_file):
     """載入並預處理數據"""
@@ -60,11 +44,8 @@ def load_and_preprocess_data(csv_file):
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(y)
     
-    # 由於DataPreprocessor已經進行了Z-score標準化，所以不需要額外的scaler
-    # 但為了保持與原代碼的兼容性，我們創建一個虛擬的scaler
-    scaler = DummyScaler()
-    
-    return X, y_encoded, label_encoder, scaler
+    # 返回preprocessor用於inverse_transform
+    return X, y_encoded, label_encoder, preprocessor
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=100):
     """訓練模型"""
@@ -168,7 +149,7 @@ def main():
     
     # 載入和預處理數據
     print("📊 載入數據...")
-    X, y, label_encoder, scaler = load_and_preprocess_data('Data/training.csv')
+    X, y, label_encoder, preprocessor = load_and_preprocess_data('Data/training.csv')
     
     # 分割數據
     # strtify 為確保比例
@@ -258,9 +239,18 @@ def main():
         for i in range(5):
             true_label = label_encoder.inverse_transform([y_test[i]])[0]
             pred_label = label_encoder.inverse_transform([sample_predicted[i].item()])[0]
-            features = scaler.inverse_transform(X_test[i].reshape(1, -1))[0]
-            print(f"  樣本 {i+1}: temp={features[0]:.1f}°C, pressure={features[1]:.2f}, "
-                  f"vibration={features[2]:.2f} | 真實: {true_label} | 預測: {pred_label}")
+            
+            # 使用preprocessor的統計信息來還原原始數據值
+            stats = preprocessor.stats
+            features_normalized = X_test[i]  # 這是已經標準化的值
+            
+            # 手動進行inverse Z-score transformation
+            temp_original = features_normalized[0] * stats['temp']['std'] + stats['temp']['mean']
+            pressure_original = features_normalized[1] * stats['pressure']['std'] + stats['pressure']['mean']
+            vibration_original = features_normalized[2] * stats['vibration']['std'] + stats['vibration']['mean']
+            
+            print(f"  樣本 {i+1}: temp={temp_original:.1f}°C, pressure={pressure_original:.2f}, "
+                  f"vibration={vibration_original:.2f} | 真實: {true_label} | 預測: {pred_label}")
 
 if __name__ == "__main__":
     main() 
