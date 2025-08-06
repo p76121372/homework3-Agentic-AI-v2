@@ -1,0 +1,27 @@
+# 🤖 Agentic AI Workflow 核心依賴
+langgraph>=0.2.0              # LangGraph 工作流程編排
+langchain>=0.2.0              # LangChain 核心框架
+langchain-google-genai>=1.0.0 # Google Gemini API 整合
+langchain-core>=0.2.0         # LangChain 核心組件
+
+# 📊 數據處理與分析
+pandas>=1.5.0                 # 數據處理和分析
+numpy>=1.21.0                 # 數值計算
+
+# 🔥 機器學習與深度學習
+torch>=1.12.0                 # PyTorch 深度學習框架
+scikit-learn>=1.1.0           # 機器學習工具包
+
+# 📈 數據視覺化
+matplotlib>=3.5.0             # 圖表繪製
+
+# 🌐 網路請求 (工作流程圖表生成備援)
+requests>=2.28.0              # HTTP 請求庫
+
+# 🎨 圖像處理 (工作流程圖表生成備援)
+Pillow>=9.0.0                 # Python 圖像處理庫
+
+# 📝 可選依賴 (需要時才安裝)
+# mermaid-cli                  # Mermaid 圖表渲染 (需要 npm install -g @mermaid-js/mermaid-cli)
+# pyppeteer>=1.0.0            # 無頭瀏覽器 (本地 Mermaid 渲染)
+# beautifulsoup4>=4.11.0      # HTML 解析 (如需要處理 HTML 響應)
