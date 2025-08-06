@@ -1,0 +1,37 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	check_file(check_file)
+	prompt_params(prompt_params)
+	user_intent_analysis(user_intent_analysis)
+	generate_data(generate_data)
+	anomaly_detection(anomaly_detection)
+	llm_summary_analysis(llm_summary_analysis)
+	user_query(user_query)
+	code_exe(code_exe)
+	cleanup_files(cleanup_files)
+	finish(finish)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> check_file;
+	anomaly_detection --> llm_summary_analysis;
+	check_file -.-> anomaly_detection;
+	check_file -.-> prompt_params;
+	cleanup_files --> finish;
+	code_exe -.-> cleanup_files;
+	code_exe -.-> user_query;
+	generate_data --> anomaly_detection;
+	llm_summary_analysis --> user_query;
+	prompt_params -.-> generate_data;
+	prompt_params -.-> user_intent_analysis;
+	user_intent_analysis -.-> generate_data;
+	user_query -.-> cleanup_files;
+	user_query -.-> code_exe;
+	finish --> __end__;
+	user_intent_analysis -.-> user_intent_analysis;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
