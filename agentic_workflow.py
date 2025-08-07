@@ -4,7 +4,47 @@ import sys
 from typing import TypedDict
 from langgraph.graph import StateGraph, END
 
-def analyze_user_intent(llm, user_input, current_num_rows, current_normal_prob, current_abnormal_prob, current_null_prob):
+# 全域設定
+MODEL_NAME = "gemini-2.5-flash-lite"
+
+def Use_LLM(prompt_text, temperature=0.7):
+    """
+    統一的 LLM 調用函數
+    
+    Args:
+        prompt_text (str): 要發送給 LLM 的文字內容
+        temperature (float): LLM 的 temperature 參數，預設為 0.7
+    
+    Returns:
+        str: LLM 的回應內容，如果失敗則返回空字串
+    """
+    try:
+        import os
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        from langchain_core.messages import HumanMessage
+        
+        # 讀取 API Key
+        with open('API_key.txt', 'r') as f:
+            api_key = f.read().strip()
+        os.environ['GOOGLE_API_KEY'] = api_key
+        
+        # 建立 LLM
+        llm = ChatGoogleGenerativeAI(
+            model=MODEL_NAME,
+            temperature=temperature,
+            max_retries=2,
+            google_api_key=os.environ['GOOGLE_API_KEY'],
+        )
+        
+        # 調用 LLM
+        response = llm.invoke([HumanMessage(content=prompt_text)])
+        return response.content
+        
+    except Exception as e:
+        print(f"[!] LLM 調用失敗: {e}")
+        return ""
+
+def analyze_user_intent(user_input, current_num_rows, current_normal_prob, current_abnormal_prob, current_null_prob):
     """讓 LLM 分析用戶意圖，判斷是否要修改參數"""
     
     intent_prompt = f"""你是參數修改意圖分析專家。請分析用戶的輸入，判斷是否要修改參數。
@@ -37,13 +77,8 @@ normal_prob=0.9
 - normal_prob, abnormal_prob, null_prob 必須是 0-1 之間的小數
 - 只有當用戶明確表示要修改參數時才輸出 [PARAM_UPDATE] 標籤"""
 
-    try:
-        from langchain_core.messages import HumanMessage
-        response = llm.invoke([HumanMessage(content=intent_prompt)])
-        return response.content
-    except Exception as e:
-        print(f"[!] LLM 意圖分析失敗: {e}")
-        return ""
+    # 使用統一的 LLM 函數
+    return Use_LLM(intent_prompt, temperature=0.7)
 
 def parse_llm_output(llm_response):
     """解析 LLM 輸出的參數修改指令"""
@@ -159,27 +194,9 @@ def prompt_params(state: WorkflowState, config=None):
 def user_intent_analysis(state: WorkflowState, config=None):
     """分析用戶意圖並處理參數修改"""
     
-    # 初始化 LLM
     try:
-        import os
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        
-        # 讀取 API Key
-        with open('API_key.txt', 'r') as f:
-            api_key = f.read().strip()
-        os.environ['GOOGLE_API_KEY'] = api_key
-        
-        # 建立 LLM
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-pro",
-            temperature=0.7,
-            max_retries=2,
-            google_api_key=os.environ['GOOGLE_API_KEY'],
-        )
-        
         # 分析用戶意圖
         intent_analysis = analyze_user_intent(
-            llm, 
             state['user_input'], 
             state['num_rows'], 
             state['normal_prob'], 
@@ -334,25 +351,8 @@ def llm_summary_analysis(state: WorkflowState, config=None):
         with open(stat_file_path, 'r', encoding='utf-8') as f:
             stat_content = f.read()
         
-        # 初始化 LLM
+        # 建立分析 prompt
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            from langchain_core.messages import HumanMessage
-            
-            # 讀取 API Key
-            with open('API_key.txt', 'r') as f:
-                api_key = f.read().strip()
-            os.environ['GOOGLE_API_KEY'] = api_key
-            
-            # 建立 LLM
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro",
-                temperature=0.7,
-                max_retries=2,
-                google_api_key=os.environ['GOOGLE_API_KEY'],
-            )
-            
-            # 建立分析 prompt
             analysis_prompt = f"""請作為工業感測器異常檢測專家，分析以下檢測統計報告，並提供專業的總結和建議。
 
 檢測統計報告內容：
@@ -368,17 +368,18 @@ def llm_summary_analysis(state: WorkflowState, config=None):
 
 請用清楚易懂的中文回答，針對設備維護人員提供實用的見解。回答要簡潔明了，重點突出。"""
 
-            # 呼叫 LLM 進行分析
-            response = llm.invoke([HumanMessage(content=analysis_prompt)])
-            llm_summary = response.content
+            # 呼叫統一的 LLM 函數
+            llm_summary = Use_LLM(analysis_prompt, temperature=0.7)
             
-            print("\n" + "="*80)
-            print("🤖 LLM 智能分析總結")
-            print("="*80)
-            print(llm_summary)
-            print("="*80)
-            
-            state['llm_summary_generated'] = True
+            if llm_summary:  # 確認 LLM 有回應
+                print("\n" + "="*80)
+                print("🤖 LLM 智能分析總結")
+                print("="*80)
+                print(llm_summary)
+                print("="*80)
+                state['llm_summary_generated'] = True
+            else:
+                raise Exception("LLM 沒有回應")
             
         except Exception as e:
             print(f"[!] LLM 分析失敗: {e}")
@@ -425,22 +426,6 @@ def user_query(state: WorkflowState, config=None):
     
     # 使用 LLM 判斷是否需要生成代碼
     try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        from langchain_core.messages import HumanMessage
-        
-        # 讀取 API Key
-        with open('API_key.txt', 'r') as f:
-            api_key = f.read().strip()
-        os.environ['GOOGLE_API_KEY'] = api_key
-        
-        # 建立 LLM
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-pro",
-            temperature=0.3,
-            max_retries=2,
-            google_api_key=os.environ['GOOGLE_API_KEY'],
-        )
-        
         # 建立判斷 prompt
         judge_prompt = f"""你是一個數據分析專家。請判斷以下用戶問題是否需要生成 pandas 代碼來回答。
 
@@ -461,8 +446,8 @@ Response: <如果不需要代碼，請直接回答問題；如果需要代碼，
 問題："什麼是溫度感測器？" → Code_flag: no
 """
 
-        response = llm.invoke([HumanMessage(content=judge_prompt)])
-        llm_output = response.content
+        # 使用統一的 LLM 函數
+        llm_output = Use_LLM(judge_prompt, temperature=0.3)
         
         # 解析 LLM 輸出
         import re
@@ -501,22 +486,6 @@ def code_exe(state: WorkflowState, config=None):
         print("\n🔧 正在生成分析代碼...")
         
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            from langchain_core.messages import HumanMessage
-            
-            # 讀取 API Key
-            with open('API_key.txt', 'r') as f:
-                api_key = f.read().strip()
-            os.environ['GOOGLE_API_KEY'] = api_key
-            
-            # 建立 LLM
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro",
-                temperature=0.3,
-                max_retries=2,
-                google_api_key=os.environ['GOOGLE_API_KEY'],
-            )
-            
             # 建立代碼生成 prompt
             max_retries = 3
             retry_count = 0
@@ -569,8 +538,8 @@ print(f"結果: {{value}}")
 
 請生成修正後的完整 Python 代碼："""
 
-                response = llm.invoke([HumanMessage(content=code_prompt)])
-                generated_code = response.content.strip()
+                # 使用統一的 LLM 函數
+                generated_code = Use_LLM(code_prompt, temperature=0.3).strip()
                 
                 # 清理代碼（移除 markdown 格式）
                 import re
