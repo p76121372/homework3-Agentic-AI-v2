@@ -68,6 +68,55 @@ python agentic_workflow.py -p
 python agentic_workflow.py -t
 ```
 
+## 🐳 Docker 部署
+
+### 快速開始 (使用預建 Docker Image)
+
+我們提供了預建的 Docker Image，包含所有必要的依賴環境，讓你可以快速開始使用：
+
+**📦 Docker Image 連結**: [iirguanyu/agentic-ai-workflow:latest](https://hub.docker.com/layers/iirguanyu/agentic-ai-workflow/latest/images/sha256:735477c58af4ec20bba258dccc2adae5c0a9deb67d8da41e113b8848caa1190c?uuid=C9148786-9A31-4385-9BEB-5F1C032707CD)
+
+```bash
+# 1. 拉取預建的 Docker Image
+docker pull iirguanyu/agentic-ai-workflow:latest
+
+# 2. 運行容器並 mount 你的專案目錄
+docker run -it --rm -v "${PWD}:/workspace" -w /workspace iirguanyu/agentic-ai-workflow:latest bash
+
+# 3. 在容器內運行系統
+python agentic_workflow.py
+```
+
+### Docker Image 特色
+
+- **🔧 完整環境**：Python 3.11 + 所有 AI/ML 依賴套件
+- **📦 體積**：壓縮後 ~8GB，解壓縮後 ~20GB
+- **⚡ 即用**：無需安裝任何依賴，直接運行
+- **🌐 公開倉庫**：任何人都可以直接拉取使用
+- **🔗 官方連結**：[Docker Hub Image 詳情](https://hub.docker.com/layers/iirguanyu/agentic-ai-workflow/latest/images/sha256:735477c58af4ec20bba258dccc2adae5c0a9deb67d8da41e113b8848caa1190c?uuid=C9148786-9A31-4385-9BEB-5F1C032707CD)
+
+### 🚀 立即開始使用
+
+這個 Docker Image 是 **公開的**，任何人都可以直接拉取和使用，無需授權：
+
+```bash
+# 直接拉取（無需登入 Docker Hub）
+docker pull iirguanyu/agentic-ai-workflow:latest
+```
+
+### Docker 使用範例
+
+```bash
+# 進入 Docker 環境
+docker run -it --rm -v "${PWD}:/workspace" -w /workspace iirguanyu/agentic-ai-workflow:latest bash
+
+# 在容器內執行
+root@container:/workspace# python agentic_workflow.py
+
+# 或者直接執行（不進入互動模式）
+docker run --rm -v "${PWD}:/workspace" -w /workspace iirguanyu/agentic-ai-workflow:latest python agentic_workflow.py
+```
+
 ## 🤖 Agentic AI Workflow 詳細說明
 
 ### 工作流程架構
